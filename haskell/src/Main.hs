@@ -28,9 +28,9 @@ getUserInput (State guesses word progress)
       if word == newProgress then
         putStrLn("Congratulations, you guessed the word!")
       else if head userInput `elem` word then
-        getUserInput(guesses) word newProgress
+        getUserInput (State guesses word newProgress)
       else
-        getUserInput(guesses - 1) word newProgress -- takes a value and turns it into an IO()
+        getUserInput(State (guesses - 1) word newProgress) -- takes a value and turns it into an IO()
 
       where
         updateProgress userInput progressChar wordChar
