@@ -33,6 +33,9 @@ class Hangman
 
   def play
     guess_num = get_guess_num
+    word_string
+    puts game_progress_string
+    puts "You have #{get_guess_num} guesses to win the game."
 
     loop do
       puts "Enter a letter: \n"
@@ -54,7 +57,4 @@ class Hangman
 end
 
 hangman = Hangman.new
-hangman.word_string
-puts hangman.game_progress_string
-puts "You have #{hangman.get_guess_num} guesses to win to the game."
 hangman.play
