@@ -1,3 +1,5 @@
+{-# LANGUAGE RecordWildCards #-}
+
 module Main where
 
 import System.IO
@@ -13,30 +15,39 @@ data State = State {
 }
 
 main :: IO ()
-main = do 
-  hSetBuffering stdout NoBuffering
-  randomNum <- randomRIO (0, 6)
-  let word = wordBank !! randomNum
-  gameLoop (State (length word + 2) word (map (const '_') word))
+main = do
+    hSetBuffering stdout NoBuffering
+    randomNum <- randomRIO (0, 6)
+    let randomWord = wordBank !! randomNum
+        initialGuesses = length randomWord + 2
+        initialProgress = map (const '_') randomWord
+    gameLoop (State initialGuesses randomWord initialProgress)
 
 gameLoop :: State -> IO ()
-gameLoop (State 0 word _) = putStrLn ("You LOSE! The word was: " <> word)
-gameLoop (State guesses word progress) = do
-    putStr "Enter a letter> "
-    userInput <- fmap uppercase getLine
-    putStrLn ("You guessed: " <> userInput)
-    let guess = head userInput
-    let newProgress = zipWith (updateProgress guess) progress word
-    putStrLn (intersperse ' ' newProgress)
-
-    if word == newProgress then
-        putStrLn("Congratulations, you guessed the word!")
-    else if guess `elem` word then
-        gameLoop (State guesses word newProgress)
-    else
-        gameLoop (State (guesses - 1) word newProgress)
-
+gameLoop state@(State {..})
+    | win state = putStrLn "Congratulations, you guessed the word!"
+    | lose state = putStrLn ("You LOSE! The word was: " <> word)
+    | otherwise = do
+        putStr "Enter a letter> "
+        userInput <- getLine
+        let guess = toUpper (head userInput)
+            newState = update guess state
+        render newState guess
+        gameLoop newState
   where
+    win state@(State {..}) = progress == word
+    lose state@(State {..}) = guesses == 0
+
+render :: State -> Char -> IO ()
+render state@(State {..}) guess = do
+    putStrLn ("You guessed: " <> [guess])
+    putStrLn (intersperse ' ' progress)
+
+update :: Char -> State -> State
+update guess state@(State {..}) = state { guesses = newGuesses, progress = newProgress }
+  where
+    newGuesses = if guess `elem` word then guesses else guesses - 1
+    newProgress = zipWith (updateProgress guess) progress word
     updateProgress guess progressChar wordChar
         | progressChar == '_' && guess == wordChar = wordChar
         | otherwise = progressChar
